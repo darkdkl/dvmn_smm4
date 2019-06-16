@@ -12,7 +12,6 @@ import time
 import telegram
 
 
-
 from telegram_posts import send_telegram
 from vk_posts import send_vk
 from facebook_posts import send_facebook
@@ -58,7 +57,7 @@ def work_with_the_table():
     values = result.get('values', [])
 
     gauth = GoogleAuth()
-    
+
     drive = GoogleDrive(gauth)
 
     if not values:
@@ -73,17 +72,14 @@ def work_with_the_table():
             if time.localtime()[6] == days.index(row[3]) and time.localtime()[3] == row[4] and 'нет' in row[7]:
                 os.makedirs(data_dir, exist_ok=True)
 
-                
-
                 if row[6]:
-                    
+
                     image = drive.CreateFile({'id': get_id((row[6]))})
                     image.GetContentFile(data_dir+image['title'])
                     image = f"{data_dir}{image['title']}"
-                    
 
                 if row[5]:
-                    
+
                     text = drive.CreateFile({'id': get_id((row[5]))})
                     message_text_file = data_dir+text['title']+'.txt'
 
@@ -93,7 +89,7 @@ def work_with_the_table():
                         message = mesg.read()
 
                 if row[0] == 'да':
-                    
+
                     send_vk(message=message, image=image)
                 if row[1] == 'да':
                     send_telegram(message=message, image=image)
@@ -104,18 +100,16 @@ def work_with_the_table():
                 values = [['Да']]
                 body = {'values': values}
 
-                result_upd = service.spreadsheets().values().update(spreadsheetId=SHEET_ID
-            ,
+                result_upd = service.spreadsheets().values().update(spreadsheetId=SHEET_ID,
                                                                     range=cell_number, valueInputOption='USER_ENTERED', body=body).execute()
                 print(f"{result_upd.get('updatedCells')} cells updated.")
 
 
 def main():
-    
-    
+
     while True:
         work_with_the_table()
-        time.sleep(30)
+        time.sleep(300)
 
 
 if __name__ == '__main__':
