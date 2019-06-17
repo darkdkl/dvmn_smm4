@@ -23,7 +23,7 @@ pip3 install -r requirements.txt
 
 ID таблицы необходимо указать в  файле .env
 ```
-SPREADSHEET_ID = 'id вашей таблицы'
+SHEET_ID = 'id вашей таблицы'
 ```
 
 
