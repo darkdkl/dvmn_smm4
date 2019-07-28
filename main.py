@@ -34,75 +34,71 @@ def work_with_the_table():
     data_dir = './data/'
     days = ["понедельник", "вторник", "среда",
             "четверг", "пятница", "суббота", "воскресенье"]
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
+    flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
-            creds = flow.run_local_server()
+    creds = flow.run_local_server()
 
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
 
     service = build('sheets', 'v4', credentials=creds)
 
     sheet = service.spreadsheets()
     result = sheet.values().get(spreadsheetId=SHEET_ID, range=RANGE_SHEET,
                                 valueRenderOption='FORMULA').execute()
-    values = result.get('values', [])
+    table_cells = result.get('values', [])
 
     gauth = GoogleAuth()
 
     drive = GoogleDrive(gauth)
 
-    if not values:
+    if not table_cells:
         print('No data found.')
 
-    else:
-        for number, row in enumerate(values):
+    
+    for number, row in enumerate(table_cells):
 
-            image = None
-            message = None
+        image = None
+        message = None
 
-            if time.localtime()[6] == days.index(row[3]) and time.localtime()[3] == row[4] and 'нет' in row[7]:
-                os.makedirs(data_dir, exist_ok=True)
+        if time.localtime()[6] == days.index(row[3]) and time.localtime()[3] == row[4] and 'нет' in row[7]:
+            os.makedirs(data_dir, exist_ok=True)
 
-                if row[6]:
+            if row[6]:
 
-                    image = drive.CreateFile({'id': get_id((row[6]))})
-                    image.GetContentFile(data_dir+image['title'])
-                    image = f"{data_dir}{image['title']}"
+                image = drive.CreateFile({'id': get_id((row[6]))})
+                
+                print(image)
+                
+                image.GetContentFile(data_dir+image['title'])
 
-                if row[5]:
 
-                    text = drive.CreateFile({'id': get_id((row[5]))})
-                    message_text_file = data_dir+text['title']+'.txt'
 
-                    text.GetContentFile(message_text_file,
-                                        mimetype='text/plain')
-                    with open(message_text_file, 'r') as mesg:
-                        message = mesg.read()
+                image = f"{data_dir}{image['title']}"
 
-                if row[0] == 'да':
+            if row[5]:
 
-                    send_vk(message=message, image=image)
-                if row[1] == 'да':
-                    send_telegram(message=message, image=image)
-                if row[2] == 'да':
-                    send_facebook(message=message, image=image)
+                text = drive.CreateFile({'id': get_id((row[5]))})
+                message_text_file = data_dir+text['title']+'.txt'
 
-                cell_number = f'H{number+3}'
-                values = [['Да']]
-                body = {'values': values}
+                text.GetContentFile(message_text_file,
+                                    mimetype='text/plain')
+                with open(message_text_file, 'r') as mesg:
+                    message = mesg.read()
 
-                result_upd = service.spreadsheets().values().update(spreadsheetId=SHEET_ID,
-                                                                    range=cell_number, valueInputOption='USER_ENTERED', body=body).execute()
-                print(f"{result_upd.get('updatedCells')} cells updated.")
+            # if row[0] == 'да':
+
+            #     send_vk(message=message, image=image)
+            # if row[1] == 'да':
+            #     send_telegram(message=message, image=image)
+            # if row[2] == 'да':
+            #     send_facebook(message=message, image=image)
+
+            cell_number = f'H{number+3}'
+            values = [['Да']]
+            body = {'values': values}
+
+            result_upd = service.spreadsheets().values().update(spreadsheetId=SHEET_ID,
+                                                                range=cell_number, valueInputOption='USER_ENTERED', body=body).execute()
+            print(f"{result_upd.get('updatedCells')} cells updated.")
 
 
 def main():
